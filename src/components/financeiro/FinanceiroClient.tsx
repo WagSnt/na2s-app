@@ -565,7 +565,7 @@ export function FinanceiroClient({ consolidado, repasses, tecnicos, mes }: Props
       </section>
 
       {/* Seção de repasses */}
-      <section>
+      <section id="repasses">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '12px' }}>
           <h2 style={{ color: 'var(--na2s-papel)', fontSize: '20px', fontWeight: 700, margin: 0 }}>
             Repasses

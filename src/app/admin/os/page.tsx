@@ -9,14 +9,15 @@ interface Props {
     tecnico_id?: string
     data_inicio?: string
     data_fim?: string
+    status_pagamento?: string
   }>
 }
 
 export default async function OSPage({ searchParams }: Props) {
-  const { status, mes, tecnico_id, data_inicio, data_fim } = await searchParams
+  const { status, mes, tecnico_id, data_inicio, data_fim, status_pagamento } = await searchParams
 
   const [ordens, tecnicos] = await Promise.all([
-    getTodasOS({ status, mes, tecnico_id, data_inicio, data_fim }),
+    getTodasOS({ status, mes, tecnico_id, data_inicio, data_fim, status_pagamento }),
     getTecnicos(),
   ])
 

@@ -1,6 +1,7 @@
 import { getTecnicoPorToken } from '@/app/actions/tecnicos'
 import { getOSDashboardTecnico } from '@/app/actions/ordens-servico'
 import { OSStatusBadge } from '@/components/ui/OSStatusBadge'
+import { AlertTriangle } from 'lucide-react'
 import type { StatusOS, Pacote, TipoEquipamento } from '@/types'
 
 interface Props {
@@ -47,11 +48,22 @@ function formatManutencao(str: string) {
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+function formatDataConclusao(str: string | null) {
+  if (!str) return '—'
+  const d = new Date(str + 'T00:00:00')
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+}
+
 function diasAte(str: string) {
   const hoje = new Date()
   hoje.setHours(0, 0, 0, 0)
   const data = new Date(str + 'T00:00:00')
   return Math.round((data.getTime() - hoje.getTime()) / 86400000)
+}
+
+function mesAtualLabel() {
+  const hoje = new Date()
+  return hoje.toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase()
 }
 
 // ---- Componentes inline --------------------------------------------------
@@ -79,6 +91,32 @@ function Card({ children, style }: { children: React.ReactNode; style?: React.CS
     <div style={{ backgroundColor: 'var(--na2s-ardosia)', border: '1px solid var(--na2s-borda)', borderRadius: '12px', padding: '16px', ...style }}>
       {children}
     </div>
+  )
+}
+
+function BadgePagamento({ status }: { status: string | null }) {
+  if (!status) return null
+
+  if (status === 'pago') {
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', borderRadius: '999px', fontSize: '10px', fontWeight: 600, padding: '2px 8px', color: '#C8FF57', backgroundColor: 'rgba(200,255,87,0.1)', border: '1px solid rgba(200,255,87,0.25)', whiteSpace: 'nowrap' }}>
+        Pago
+      </span>
+    )
+  }
+  if (status === 'inadimplente') {
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', borderRadius: '999px', fontSize: '10px', fontWeight: 600, padding: '2px 8px', color: '#FFB830', backgroundColor: 'rgba(255,184,48,0.15)', border: '1px solid rgba(255,184,48,0.4)', whiteSpace: 'nowrap' }}>
+        <AlertTriangle size={10} />
+        Inadimplente
+      </span>
+    )
+  }
+  // pendente
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', borderRadius: '999px', fontSize: '10px', fontWeight: 600, padding: '2px 8px', color: '#FFB830', backgroundColor: 'rgba(255,184,48,0.08)', border: '1px solid rgba(255,184,48,0.25)', whiteSpace: 'nowrap' }}>
+      Pendente
+    </span>
   )
 }
 
@@ -153,11 +191,14 @@ export default async function TecnicoDashboard({ params }: Props) {
             </Card>
 
             <Card style={{ minWidth: '140px', flexShrink: 0 }}>
-              <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--na2s-lima)', letterSpacing: '-1px', lineHeight: 1 }}>
+              <div style={{ fontSize: '24px', fontWeight: 700, color: osDoMes.length > 0 ? 'var(--na2s-lima)' : 'var(--na2s-texto-mudo)', letterSpacing: '-1px', lineHeight: 1 }}>
                 {osDoMes.length}
               </div>
               <div style={{ fontSize: '12px', color: 'var(--na2s-texto-secundario)', marginTop: '6px' }}>
                 OS Concluídas
+              </div>
+              <div style={{ fontSize: '10px', color: '#3D4450', marginTop: '2px' }}>
+                este mês
               </div>
             </Card>
 
@@ -211,7 +252,55 @@ export default async function TecnicoDashboard({ params }: Props) {
           )}
         </section>
 
-        {/* Seção 3 — Inadimplência (só se houver) */}
+        {/* Separador */}
+        <div style={{ borderTop: '1px solid #1E2128', margin: '8px 16px 24px' }} />
+
+        {/* Seção 3 — OS Concluídas do mês */}
+        <section style={{ ...secao, marginTop: '-28px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <SectionLabel cor="#5A6070">Concluídas — {mesAtualLabel()}</SectionLabel>
+            {osDoMes.length > 0 && (
+              <span style={{ display: 'inline-block', backgroundColor: 'rgba(200,255,87,0.15)', color: 'var(--na2s-lima)', fontSize: '11px', fontWeight: 700, borderRadius: '999px', padding: '2px 8px', marginTop: '-12px' }}>
+                {osDoMes.length}
+              </span>
+            )}
+          </div>
+
+          {osDoMes.length === 0 ? (
+            <p style={{ color: '#5A6070', fontSize: '14px', textAlign: 'center', padding: '24px 0' }}>
+              Nenhuma OS concluída este mês.
+            </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {osDoMes.map((os) => (
+                <div
+                  key={os.id}
+                  style={{ backgroundColor: '#141720', border: '1px solid #1E2128', borderRadius: '12px', padding: '16px' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '4px' }}>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#F0EDE6' }}>
+                      {os.cliente?.nome ?? '—'}
+                    </div>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#C8FF57', whiteSpace: 'nowrap' }}>
+                      {os.valor_cobrado != null ? formatCurrency(os.valor_cobrado) : '—'}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '13px', color: '#5A6070' }}>
+                      {os.tipo_servico ? (TIPO_SERVICO_LABEL[os.tipo_servico] ?? os.tipo_servico) : '—'}
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#5A6070' }}>
+                      {formatDataConclusao(os.data_conclusao)}
+                    </div>
+                  </div>
+                  <BadgePagamento status={os.status_pagamento} />
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Seção 4 — Inadimplência (só se houver) */}
         {inadimplentes.length > 0 && (
           <section style={secao}>
             <SectionLabel cor="var(--na2s-ambar)">Inadimplência</SectionLabel>
@@ -233,7 +322,7 @@ export default async function TecnicoDashboard({ params }: Props) {
           </section>
         )}
 
-        {/* Seção 4 — Próximas manutenções (só se houver) */}
+        {/* Seção 5 — Próximas manutenções (só se houver) */}
         {proximasManutencoes.length > 0 && (
           <section style={secao}>
             <SectionLabel>Manutenções próximas</SectionLabel>

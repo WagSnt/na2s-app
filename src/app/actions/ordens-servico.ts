@@ -55,6 +55,7 @@ export async function getTodasOS(filtros?: {
   tecnico_id?: string
   data_inicio?: string
   data_fim?: string
+  status_pagamento?: string
 }): Promise<OrdemServico[]> {
   const supabase = await createClient()
 
@@ -64,6 +65,7 @@ export async function getTodasOS(filtros?: {
     .order('data_agendamento', { ascending: false })
 
   if (filtros?.status) query = query.eq('status', filtros.status)
+  if (filtros?.status_pagamento) query = query.eq('status_pagamento', filtros.status_pagamento)
   if (filtros?.tecnico_id) query = query.eq('tecnico_id', filtros.tecnico_id)
   if (filtros?.mes) {
     const inicio = `${filtros.mes}-01`
@@ -304,7 +306,7 @@ export async function editarOS(
 
 export interface DashboardTecnico {
   osAbertas: Array<{ id: string; cliente: { nome: string } | null; tipo_servico: string | null; data_agendamento: string | null; status: string }>
-  osDoMes: Array<{ id: string; numero_os: number; cliente: { nome: string } | null; valor_cobrado: number | null }>
+  osDoMes: Array<{ id: string; numero_os: number; cliente: { nome: string } | null; valor_cobrado: number | null; status_pagamento: string | null; data_conclusao: string | null; tipo_servico: string | null }>
   faturamentoMes: number
   inadimplentes: Array<{ id: string; numero_os: number; cliente: { nome: string } | null; valor_cobrado: number | null }>
   proximasManutencoes: Array<{ id: string; tipo: string; marca: string | null; proxima_manutencao: string; cliente: { nome: string } | null }>
@@ -333,7 +335,7 @@ export async function getOSDashboardTecnico(tecnico_id: string): Promise<Dashboa
 
     supabase
       .from('ordens_servico')
-      .select('id, numero_os, valor_cobrado, cliente:clientes(nome)')
+      .select('id, numero_os, valor_cobrado, status_pagamento, data_conclusao, tipo_servico, cliente:clientes(nome)')
       .eq('tecnico_id', tecnico_id)
       .eq('status', 'concluida')
       .gte('data_conclusao', inicioMes)
