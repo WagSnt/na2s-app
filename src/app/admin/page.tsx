@@ -1,10 +1,8 @@
 import Link from 'next/link'
-import {
-  TrendingUp, CheckCircle, Clock, ClipboardList, CheckSquare,
-  AlertTriangle, BarChart2, ArrowRight,
-} from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { getKPIsNA2S, getTecnicosResumo } from '@/app/actions/dashboard'
 import { StatusBadge } from '@/components/ui/StatusBadge'
+import { CardKPI } from '@/components/dashboard/CardKPI'
 import type { Pacote, StatusTecnico } from '@/types'
 
 // ---- Helpers ----------------------------------------------------------------
@@ -27,124 +25,6 @@ function saudacao(): string {
 
 const PACOTE_LABEL: Record<Pacote, string> = { starter: 'Starter', pro: 'Pro', full: 'Full' }
 
-// ---- Sub-components ---------------------------------------------------------
-
-function CardReceita({
-  label, valor, cor = 'var(--na2s-lima)', icon: Icon, href,
-}: {
-  label: string
-  valor: number
-  cor?: string
-  icon: React.ComponentType<{ size: number }>
-  href: string
-}) {
-  return (
-    <Link
-      href={href}
-      style={{ textDecoration: 'none', display: 'block' }}
-      className="kpi-card"
-    >
-      <div
-        style={{
-          backgroundColor: 'var(--na2s-ardosia)',
-          border: '1px solid var(--na2s-borda)',
-          borderRadius: '16px',
-          padding: '20px 24px',
-          position: 'relative',
-          transition: 'all 0.15s ease',
-          cursor: 'pointer',
-        }}
-        onMouseEnter={(e) => {
-          const el = e.currentTarget
-          el.style.borderColor = 'rgba(200,255,87,0.3)'
-          el.style.transform = 'translateY(-1px)'
-          const tooltip = el.querySelector<HTMLElement>('.card-tooltip')
-          if (tooltip) tooltip.style.opacity = '1'
-        }}
-        onMouseLeave={(e) => {
-          const el = e.currentTarget
-          el.style.borderColor = 'var(--na2s-borda)'
-          el.style.transform = 'translateY(0)'
-          const tooltip = el.querySelector<HTMLElement>('.card-tooltip')
-          if (tooltip) tooltip.style.opacity = '0'
-        }}
-      >
-        <div style={{ position: 'absolute', top: '18px', right: '18px', color: cor }}>
-          <Icon size={18} />
-        </div>
-        <div style={{ fontSize: '26px', fontWeight: 700, letterSpacing: '-1.5px', color: cor, lineHeight: 1, marginBottom: '6px' }}>
-          {formatCurrency(valor)}
-        </div>
-        <div style={{ fontSize: '12px', color: 'var(--na2s-texto-secundario)' }}>{label}</div>
-        <div
-          className="card-tooltip"
-          style={{ fontSize: '11px', color: '#3D4450', marginTop: '6px', opacity: 0, transition: 'opacity 0.15s ease' }}
-        >
-          Ver detalhes →
-        </div>
-      </div>
-    </Link>
-  )
-}
-
-function CardMetrica({
-  label, valor, cor = 'var(--na2s-lima)', icon: Icon, formatado, href,
-}: {
-  label: string
-  valor: number
-  cor?: string
-  icon: React.ComponentType<{ size: number }>
-  formatado?: string
-  href: string
-}) {
-  return (
-    <Link
-      href={href}
-      style={{ textDecoration: 'none', display: 'block' }}
-    >
-      <div
-        style={{
-          backgroundColor: 'var(--na2s-ardosia)',
-          border: '1px solid var(--na2s-borda)',
-          borderRadius: '16px',
-          padding: '20px 24px',
-          position: 'relative',
-          transition: 'all 0.15s ease',
-          cursor: 'pointer',
-        }}
-        onMouseEnter={(e) => {
-          const el = e.currentTarget
-          el.style.borderColor = 'rgba(200,255,87,0.3)'
-          el.style.transform = 'translateY(-1px)'
-          const tooltip = el.querySelector<HTMLElement>('.card-tooltip')
-          if (tooltip) tooltip.style.opacity = '1'
-        }}
-        onMouseLeave={(e) => {
-          const el = e.currentTarget
-          el.style.borderColor = 'var(--na2s-borda)'
-          el.style.transform = 'translateY(0)'
-          const tooltip = el.querySelector<HTMLElement>('.card-tooltip')
-          if (tooltip) tooltip.style.opacity = '0'
-        }}
-      >
-        <div style={{ position: 'absolute', top: '18px', right: '18px', color: cor }}>
-          <Icon size={18} />
-        </div>
-        <div style={{ fontSize: '40px', fontWeight: 700, letterSpacing: '-2px', color: cor, lineHeight: 1, marginBottom: '6px' }}>
-          {formatado ?? String(valor)}
-        </div>
-        <div style={{ fontSize: '12px', color: 'var(--na2s-texto-secundario)' }}>{label}</div>
-        <div
-          className="card-tooltip"
-          style={{ fontSize: '11px', color: '#3D4450', marginTop: '6px', opacity: 0, transition: 'opacity 0.15s ease' }}
-        >
-          Ver detalhes →
-        </div>
-      </div>
-    </Link>
-  )
-}
-
 // ---- Página -----------------------------------------------------------------
 
 export default async function AdminDashboard() {
@@ -166,34 +46,57 @@ export default async function AdminDashboard() {
 
       {/* Linha 1 — Receita NA2S */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginBottom: '16px' }}>
-        <CardReceita label="Receita do mês" valor={kpis.receitaMesAtual} icon={TrendingUp} href="/admin/financeiro" />
-        <CardReceita label="Recebido" valor={kpis.receitaRecebidaMes} icon={CheckCircle} href="/admin/financeiro" />
-        <CardReceita
+        <CardKPI
+          label="Receita do mês"
+          valor={formatCurrency(kpis.receitaMesAtual)}
+          iconName="TrendingUp"
+          href="/admin/financeiro"
+        />
+        <CardKPI
+          label="Recebido"
+          valor={formatCurrency(kpis.receitaRecebidaMes)}
+          iconName="CheckCircle"
+          href="/admin/financeiro"
+        />
+        <CardKPI
           label="Pendente"
-          valor={kpis.receitaPendenteMes}
+          valor={formatCurrency(kpis.receitaPendenteMes)}
           cor={kpis.receitaPendenteMes > 0 ? 'var(--na2s-ambar)' : 'var(--na2s-lima)'}
-          icon={Clock}
+          iconName="Clock"
           href="/admin/financeiro"
         />
       </div>
 
       {/* Linha 2 — Operacional */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px', marginBottom: '32px' }}>
-        <CardMetrica label="OS em aberto" valor={kpis.osAbertas} icon={ClipboardList} href="/admin/os?status=agendada" />
-        <CardMetrica label="OS concluídas (mês)" valor={kpis.osConcluidas} icon={CheckSquare} href="/admin/os?status=concluida" />
-        <CardMetrica
-          label="Inadimplentes"
-          valor={kpis.inadimplentesClientes}
-          cor={kpis.inadimplentesClientes > 0 ? 'var(--na2s-ambar)' : 'var(--na2s-lima)'}
-          icon={AlertTriangle}
-          href="/admin/os?status_pagamento=inadimplente"
+        <CardKPI
+          label="OS em aberto"
+          valor={String(kpis.osAbertas)}
+          iconName="ClipboardList"
+          href="/admin/os?status=agendada"
+          tamanho="metrica"
         />
-        <CardMetrica
+        <CardKPI
+          label="OS concluídas (mês)"
+          valor={String(kpis.osConcluidas)}
+          iconName="CheckSquare"
+          href="/admin/os?status=concluida"
+          tamanho="metrica"
+        />
+        <CardKPI
+          label="Inadimplentes"
+          valor={String(kpis.inadimplentesClientes)}
+          cor={kpis.inadimplentesClientes > 0 ? 'var(--na2s-ambar)' : 'var(--na2s-lima)'}
+          iconName="AlertTriangle"
+          href="/admin/os?status_pagamento=inadimplente"
+          tamanho="metrica"
+        />
+        <CardKPI
           label="Ticket médio"
-          valor={kpis.ticketMedioGeral}
-          formatado={formatCurrency(kpis.ticketMedioGeral)}
-          icon={BarChart2}
+          valor={formatCurrency(kpis.ticketMedioGeral)}
+          iconName="BarChart2"
           href="/admin/financeiro"
+          tamanho="metrica"
         />
       </div>
 
@@ -222,7 +125,6 @@ export default async function AdminDashboard() {
                 key={t.id}
                 style={{ backgroundColor: 'var(--na2s-ardosia)', border: '1px solid var(--na2s-borda)', borderRadius: '12px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}
               >
-                {/* Nome + badges */}
                 <div style={{ flex: 1, minWidth: '160px' }}>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--na2s-papel)', marginBottom: '4px' }}>
                     {t.nome}
@@ -235,7 +137,6 @@ export default async function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Faturamento */}
                 <div style={{ textAlign: 'right', minWidth: '100px' }}>
                   <div style={{ fontSize: '15px', fontWeight: 700, color: t.faturamento_mes > 0 ? 'var(--na2s-lima)' : 'var(--na2s-texto-mudo)', letterSpacing: '-0.5px' }}>
                     {formatCurrency(t.faturamento_mes)}
@@ -243,7 +144,6 @@ export default async function AdminDashboard() {
                   <div style={{ fontSize: '11px', color: 'var(--na2s-texto-secundario)' }}>faturamento mês</div>
                 </div>
 
-                {/* Ação */}
                 <Link
                   href={`/admin/tecnicos/${t.id}`}
                   style={{ padding: '6px 16px', borderRadius: '999px', border: '1px solid var(--na2s-borda)', color: 'var(--na2s-papel)', fontSize: '12px', fontWeight: 500, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}
@@ -269,24 +169,11 @@ export default async function AdminDashboard() {
               <li>
                 <Link
                   href="/admin/os?status_pagamento=inadimplente"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: 'var(--na2s-papel)', textDecoration: 'none', transition: 'color 0.15s ease', cursor: 'pointer' }}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget
-                    el.style.color = '#ffffff'
-                    const icon = el.querySelector<HTMLElement>('.alert-arrow')
-                    if (icon) icon.style.transform = 'translateX(4px)'
-                  }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget
-                    el.style.color = 'var(--na2s-papel)'
-                    const icon = el.querySelector<HTMLElement>('.alert-arrow')
-                    if (icon) icon.style.transform = 'translateX(0)'
-                  }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: 'var(--na2s-papel)', textDecoration: 'none' }}
+                  className="alert-link"
                 >
                   {kpis.inadimplentesClientes} cliente{kpis.inadimplentesClientes !== 1 ? 's' : ''} com pagamento em atraso
-                  <span className="alert-arrow" style={{ display: 'inline-flex', transition: 'transform 0.15s ease' }}>
-                    <ArrowRight size={14} color="var(--na2s-ambar)" />
-                  </span>
+                  <ArrowRight size={14} color="var(--na2s-ambar)" />
                 </Link>
               </li>
             )}
@@ -294,24 +181,11 @@ export default async function AdminDashboard() {
               <li>
                 <Link
                   href="/admin/financeiro#repasses"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: 'var(--na2s-papel)', textDecoration: 'none', transition: 'color 0.15s ease', cursor: 'pointer' }}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget
-                    el.style.color = '#ffffff'
-                    const icon = el.querySelector<HTMLElement>('.alert-arrow')
-                    if (icon) icon.style.transform = 'translateX(4px)'
-                  }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget
-                    el.style.color = 'var(--na2s-papel)'
-                    const icon = el.querySelector<HTMLElement>('.alert-arrow')
-                    if (icon) icon.style.transform = 'translateX(0)'
-                  }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: 'var(--na2s-papel)', textDecoration: 'none' }}
+                  className="alert-link"
                 >
                   Repasses pendentes: {formatCurrency(kpis.repassesPendentes)}
-                  <span className="alert-arrow" style={{ display: 'inline-flex', transition: 'transform 0.15s ease' }}>
-                    <ArrowRight size={14} color="var(--na2s-ambar)" />
-                  </span>
+                  <ArrowRight size={14} color="var(--na2s-ambar)" />
                 </Link>
               </li>
             )}
